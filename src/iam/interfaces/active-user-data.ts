@@ -7,4 +7,9 @@ export interface ActiveUserData {
    * The user's email
    */
   email: string;
+
+  /**
+   * The user's role.
+   */
+  role: string;
 }
