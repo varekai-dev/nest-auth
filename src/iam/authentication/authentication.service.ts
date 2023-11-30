@@ -16,6 +16,11 @@ import jwtConfig from 'iam/config/jwt.config';
 import { ActiveUserData } from 'iam/interfaces/active-user-data';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Response } from 'express';
+import { randomUUID } from 'crypto';
+import {
+  InvalidatedRefreshTokenError,
+  RefreshTokenIdsStorage,
+} from './refresh-token-ids.storage';
 
 @Injectable()
 export class AuthenticationService {
@@ -31,6 +36,7 @@ export class AuthenticationService {
     private readonly jwtService: JwtService,
     @Inject(jwtConfig.KEY)
     private readonly jwtConfiguration: ConfigType<typeof jwtConfig>,
+    private readonly refreshTokensIdsStorage: RefreshTokenIdsStorage,
   ) {}
   async signUp(SignUpDto: SignUpDto) {
     try {
@@ -68,6 +74,7 @@ export class AuthenticationService {
   }
 
   async generateTokens(user: User) {
+    const refreshTokenId = randomUUID();
     const [accessToken, refreshToken] = await Promise.all([
       this.signToken<Partial<ActiveUserData>>(
         user.id,
@@ -76,9 +83,15 @@ export class AuthenticationService {
           email: user.email,
         },
       ),
-      this.signToken(user.id, this.jwtConfiguration.refreshTokenTtl),
+      this.signToken<Record<string, string>>(
+        user.id,
+        this.jwtConfiguration.refreshTokenTtl,
+        {
+          refreshTokenId,
+        },
+      ),
     ]);
-
+    await this.refreshTokensIdsStorage.insert(user.id, refreshTokenId);
     return {
       accessToken,
       refreshToken,
@@ -87,19 +100,34 @@ export class AuthenticationService {
 
   async refreshTokens(refreshTokenDto: RefreshTokenDto, response: Response) {
     try {
-      const { sub } = await this.jwtService.verifyAsync<
-        Pick<ActiveUserData, 'sub'>
+      const { sub, refreshTokenId } = await this.jwtService.verifyAsync<
+        Pick<ActiveUserData, 'sub'> & { refreshTokenId: string }
       >(refreshTokenDto.refreshToken, this.jwtConfig);
 
       const user = await this.userRepository.findOneByOrFail({
         id: sub,
       });
+
+      const isValid = await this.refreshTokensIdsStorage.validate(
+        user.id,
+        refreshTokenId,
+      );
+
+      if (isValid) {
+        await this.refreshTokensIdsStorage.invalidate(user.id);
+      } else {
+        throw new Error('Refresh token is invalid');
+      }
+
       const tokens = await this.generateTokens(user);
 
       this.setCookies(response, tokens);
 
       return tokens;
     } catch (error) {
+      if (error instanceof InvalidatedRefreshTokenError) {
+        throw new UnauthorizedException('Access denied');
+      }
       throw new UnauthorizedException();
     }
   }
