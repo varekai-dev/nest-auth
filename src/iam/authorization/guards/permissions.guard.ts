@@ -1,25 +1,26 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
-import { Role } from 'users/enums/role.enum';
-import { ROLES_KEY } from '../decorators/roles.decorators';
 import { ActiveUserData } from 'iam/interfaces/active-user-data.interface';
 import { REQUEST_USER_KEY } from 'iam/iam.constants';
+import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
+import { PermissionType } from '../permission.type';
 
 @Injectable()
-export class RolesGuard implements CanActivate {
+export class PermissionGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
   canActivate(context: ExecutionContext): boolean {
-    const contextRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (!contextRoles) {
+    const contextPermissions = this.reflector.getAllAndOverride<
+      PermissionType[]
+    >(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
+    if (!contextPermissions) {
       return true;
     }
     const user: ActiveUserData = context.switchToHttp().getRequest()[
       REQUEST_USER_KEY
     ];
-    return contextRoles.some((role) => user.role === role);
+    return contextPermissions.every(
+      (permission) => user.permission?.includes(permission),
+    );
   }
 }

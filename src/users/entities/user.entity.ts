@@ -1,3 +1,4 @@
+import { PermissionType } from 'iam/authorization/permission.type';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { Role } from 'users/enums/role.enum';
 
@@ -14,4 +15,7 @@ export class User {
 
   @Column({ enum: Role, default: Role.User })
   role: Role;
+
+  @Column({ enum: Permissions, default: [], type: 'json' })
+  permission: PermissionType[];
 }

@@ -13,7 +13,7 @@ import { SignInDto } from './dto/sign-in.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigType } from '@nestjs/config';
 import jwtConfig from 'iam/config/jwt.config';
-import { ActiveUserData } from 'iam/interfaces/active-user-data';
+import { ActiveUserData } from 'iam/interfaces/active-user-data.interface';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Response } from 'express';
 import { randomUUID } from 'crypto';
@@ -82,6 +82,7 @@ export class AuthenticationService {
         {
           email: user.email,
           role: user.role,
+          // permission: user.permission,
         },
       ),
       this.signToken<Record<string, string>>(

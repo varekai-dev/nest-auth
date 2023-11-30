@@ -11,14 +11,17 @@ import { CoffeesService } from './coffees.service';
 import { CreateCoffeeDto } from './dto/create-coffee.dto';
 import { UpdateCoffeeDto } from './dto/update-coffee.dto';
 import { ActiveUser } from 'iam/decorators/active-user.decorator';
-import { ActiveUserData } from 'iam/interfaces/active-user-data';
+import { ActiveUserData } from 'iam/interfaces/active-user-data.interface';
 import { Roles } from 'iam/authorization/decorators/roles.decorators';
 import { Role } from 'users/enums/role.enum';
+// import { Permissions } from 'iam/authorization/decorators/permissions.decorator';
+// import { Permission } from 'iam/authorization/permission.type';
 
 @Controller('coffees')
 export class CoffeesController {
   constructor(private readonly coffeesService: CoffeesService) {}
 
+  // @Permissions(Permission.CreateCoffee)
   @Roles(Role.Admin)
   @Post()
   create(@Body() createCoffeeDto: CreateCoffeeDto) {
