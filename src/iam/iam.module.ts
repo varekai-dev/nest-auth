@@ -12,9 +12,12 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthenticationGuard } from './authentication/guards/authentication.guard';
 import { AccessTokenGuard } from './authentication/guards/access-token.guard';
 import { RefreshTokenIdsStorage } from './authentication/refresh-token-ids.storage';
-import { RolesGuard } from './authorization/guards/roles.guard';
-// import { PermissionGuard } from './authorization/guards/permissions.guard';
+import { PolicyHandlerStorage } from './authentication/policies/policy-handlers.storage';
+import { FrameworkContributorPolicyHandler } from './authentication/policies/framework-contributor.policy';
+import { PoliciesGuard } from './authentication/guards/policies.guard';
 
+// import { PermissionGuard } from './authorization/guards/permissions.guard';
+// import { RolesGuard } from './authorization/guards/roles.guard';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
@@ -33,16 +36,23 @@ import { RolesGuard } from './authorization/guards/roles.guard';
 
     {
       provide: APP_GUARD,
-      useClass: RolesGuard,
+      useClass: PoliciesGuard,
     },
     // Uncomment this line to enable the PermissionGuard
     // {
     //   provide: APP_GUARD,
     //   useClass: PermissionGuard,
     // },
+    // Uncomment this line to enable the RolesGuard
+    // {
+    //   provide: APP_GUARD,
+    //   useClass: RolesGuard,
+    // },
     AccessTokenGuard,
     AuthenticationService,
     RefreshTokenIdsStorage,
+    PolicyHandlerStorage,
+    FrameworkContributorPolicyHandler,
   ],
   controllers: [AuthenticationController],
 })

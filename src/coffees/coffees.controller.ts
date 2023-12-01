@@ -14,6 +14,8 @@ import { ActiveUser } from 'iam/decorators/active-user.decorator';
 import { ActiveUserData } from 'iam/interfaces/active-user-data.interface';
 import { Roles } from 'iam/authorization/decorators/roles.decorators';
 import { Role } from 'users/enums/role.enum';
+import { FrameworkContributorPolicy } from 'iam/authentication/policies/framework-contributor.policy';
+import { Policies } from 'iam/authentication/decorators/policies.decorator';
 // import { Permissions } from 'iam/authorization/decorators/permissions.decorator';
 // import { Permission } from 'iam/authorization/permission.type';
 
@@ -22,7 +24,8 @@ export class CoffeesController {
   constructor(private readonly coffeesService: CoffeesService) {}
 
   // @Permissions(Permission.CreateCoffee)
-  @Roles(Role.Admin)
+  // @Roles(Role.Admin)
+  @Policies(new FrameworkContributorPolicy())
   @Post()
   create(@Body() createCoffeeDto: CreateCoffeeDto) {
     return this.coffeesService.create(createCoffeeDto);
